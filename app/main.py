@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.exceptions import register_exception_handlers
 from app.core.logging import get_logger, setup_logging
 
 setup_logging()
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    register_exception_handlers(app)
     app.include_router(api_router)
 
     @app.get("/", tags=["meta"], summary="Service metadata")
