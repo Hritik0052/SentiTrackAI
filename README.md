@@ -131,8 +131,8 @@ local planning docs (`DEVELOPMENT_PLAN.md`, `CHECKLIST.md`).
 - ✅ **Phase 3** — User module (register + profile management)
 - ✅ **Phase 4** — Authentication (login / refresh / logout)
 - ✅ **Phase 5** — Journal CRUD (pagination / sort / search)
-- ⏳ **Phase 6** — AI integration (OpenRouter) ← _next_
-- ☐ **Phase 7** — Sentiment analysis
+- ✅ **Phase 6** — AI integration (OpenRouter, retry/fallback, safe JSON parsing)
+- ⏳ **Phase 7** — Sentiment analysis ← _next_
 - ☐ **Phase 8** — Weekly summaries
 - ☐ **Phase 9** — Analytics
 - ☐ **Phase 10** — Search
