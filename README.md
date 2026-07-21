@@ -110,7 +110,7 @@ are in [`docs/usage/`](docs/usage/).
 | Database       | —                      | [phase 2](docs/usage/phase-02-database.md)                   |
 | Users          | `/api/v1/users`        | [phase 3](docs/usage/phase-03-users.md)                      |
 | Auth           | `/api/v1/auth`         | [phase 4](docs/usage/phase-04-authentication.md)             |
-| Journals       | `/api/v1/journals`     | _coming in Phase 5_                                          |
+| Journals       | `/api/v1/journals`     | [phase 5](docs/usage/phase-05-journal.md)                    |
 | Sentiment      | `/api/v1/journals/...` | _coming in Phase 7_                                          |
 | Summary        | `/api/v1/summary`      | _coming in Phase 8_                                          |
 | Analytics      | `/api/v1/analytics`    | _coming in Phase 9_                                          |
@@ -130,8 +130,8 @@ local planning docs (`DEVELOPMENT_PLAN.md`, `CHECKLIST.md`).
 - ✅ **Phase 2** — Database layer (SQLAlchemy + Alembic)
 - ✅ **Phase 3** — User module (register + profile management)
 - ✅ **Phase 4** — Authentication (login / refresh / logout)
-- ⏳ **Phase 5** — Journal CRUD ← _next_
-- ☐ **Phase 6** — AI integration (OpenRouter)
+- ✅ **Phase 5** — Journal CRUD (pagination / sort / search)
+- ⏳ **Phase 6** — AI integration (OpenRouter) ← _next_
 - ☐ **Phase 7** — Sentiment analysis
 - ☐ **Phase 8** — Weekly summaries
 - ☐ **Phase 9** — Analytics

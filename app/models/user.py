@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.journal_entry import JournalEntry
     from app.models.refresh_token import RefreshToken
 
 
@@ -25,7 +26,10 @@ class User(Base, TimestampMixin):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    # NOTE: `journals` relationship is added in Phase 5 once JournalEntry exists.
+    journals: Mapped[list["JournalEntry"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<User id={self.id} email={self.email!r}>"
