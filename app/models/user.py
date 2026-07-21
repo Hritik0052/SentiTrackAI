@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.refresh_token import RefreshToken
 
 
 class User(Base, TimestampMixin):
@@ -16,6 +21,10 @@ class User(Base, TimestampMixin):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     # NOTE: `journals` relationship is added in Phase 5 once JournalEntry exists.
 
     def __repr__(self) -> str:  # pragma: no cover

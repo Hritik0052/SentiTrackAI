@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import uuid
 
 import bcrypt
 import jwt
@@ -34,6 +36,7 @@ def _encode(subject: str | int, expires_delta: dt.timedelta, token_type: str) ->
     payload = {
         "sub": str(subject),
         "type": token_type,
+        "jti": uuid.uuid4().hex,
         "iat": _now(),
         "exp": expire,
     }
@@ -58,3 +61,8 @@ def create_refresh_token(subject: str | int) -> tuple[str, dt.datetime]:
 def decode_token(token: str) -> dict:
     """Decode & validate a JWT. Raises jwt.PyJWTError on failure."""
     return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+
+
+def hash_token(token: str) -> str:
+    """SHA-256 digest used to look up/store refresh tokens without keeping raw values."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()

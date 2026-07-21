@@ -109,7 +109,7 @@ are in [`docs/usage/`](docs/usage/).
 | Health / meta  | `/`, `/health`         | [phase 1](docs/usage/phase-01-project-init.md)               |
 | Database       | —                      | [phase 2](docs/usage/phase-02-database.md)                   |
 | Users          | `/api/v1/users`        | [phase 3](docs/usage/phase-03-users.md)                      |
-| Auth           | `/api/v1/auth`         | _coming in Phase 4_                                          |
+| Auth           | `/api/v1/auth`         | [phase 4](docs/usage/phase-04-authentication.md)             |
 | Journals       | `/api/v1/journals`     | _coming in Phase 5_                                          |
 | Sentiment      | `/api/v1/journals/...` | _coming in Phase 7_                                          |
 | Summary        | `/api/v1/summary`      | _coming in Phase 8_                                          |
@@ -129,8 +129,8 @@ local planning docs (`DEVELOPMENT_PLAN.md`, `CHECKLIST.md`).
 - ✅ **Phase 1** — Project initialization (health, config, logging)
 - ✅ **Phase 2** — Database layer (SQLAlchemy + Alembic)
 - ✅ **Phase 3** — User module (register + profile management)
-- ⏳ **Phase 4** — Authentication (login / refresh / logout) ← _next_
-- ☐ **Phase 5** — Journal CRUD
+- ✅ **Phase 4** — Authentication (login / refresh / logout)
+- ⏳ **Phase 5** — Journal CRUD ← _next_
 - ☐ **Phase 6** — AI integration (OpenRouter)
 - ☐ **Phase 7** — Sentiment analysis
 - ☐ **Phase 8** — Weekly summaries
