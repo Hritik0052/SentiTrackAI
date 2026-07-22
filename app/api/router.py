@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import analytics, auth, health, journals, summary, users
+from app.api.routes import analytics, auth, health, journals, search, summary, users
 from app.core.config import settings
 
 # Top-level router (health lives at root, e.g. GET /health).
@@ -16,6 +16,7 @@ v1_router.include_router(users.router)
 v1_router.include_router(journals.router)
 v1_router.include_router(summary.router)
 v1_router.include_router(analytics.router)
-# More feature routers (search, insights, ...) are appended in later phases.
+v1_router.include_router(search.router)
+# More feature routers (insights, ...) are appended in later phases.
 
 api_router.include_router(v1_router)
