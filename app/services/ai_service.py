@@ -49,6 +49,16 @@ _SUMMARY_SYSTEM_PROMPT = (
     "— no JSON, no headers, no bullet points."
 )
 
+_WEEKLY_SUMMARY_SYSTEM_PROMPT = (
+    "You are a supportive journaling coach. Given a user's journal entries from a "
+    "single week, respond with ONLY a single JSON object (no markdown, no "
+    "commentary) of the exact shape: "
+    '{"summary": "<2-4 sentence reflective summary of the week\'s overall mood, '
+    'themes, and key events>", '
+    '"suggestions": ["<short, actionable, encouraging suggestion>", ...]}. '
+    "Provide between 2 and 4 suggestions."
+)
+
 
 # --- HTTP plumbing: retries + timeout + fallback model -----------------------
 
@@ -227,3 +237,32 @@ def generate_summary(entries: list[str] | str) -> str:
     if not summary:
         raise AIServiceError("AI returned an empty summary")
     return summary
+
+
+def generate_weekly_summary(entries: list[str] | str) -> dict:
+    """Return {"summary": str, "suggestions": list[str]} for a week of entries."""
+    texts = [entries] if isinstance(entries, str) else list(entries)
+    if not texts:
+        raise BadRequestError("At least one journal entry is required to summarize")
+
+    joined = "\n\n---\n\n".join(texts)
+    raw = _chat_completion(
+        [
+            {"role": "system", "content": _WEEKLY_SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": joined},
+        ]
+    )
+    data = _extract_json_object(raw)
+
+    summary = str(data.get("summary", "")).strip()
+    if not summary:
+        raise AIServiceError("AI returned an empty weekly summary")
+
+    raw_suggestions = data.get("suggestions", [])
+    if isinstance(raw_suggestions, str):
+        raw_suggestions = [raw_suggestions]
+    if not isinstance(raw_suggestions, list):
+        raw_suggestions = []
+    suggestions = [str(item).strip() for item in raw_suggestions if str(item).strip()]
+
+    return {"summary": summary, "suggestions": suggestions[:4]}

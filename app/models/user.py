@@ -12,6 +12,7 @@ from app.database.base import Base, TimestampMixin
 if TYPE_CHECKING:
     from app.models.journal_entry import JournalEntry
     from app.models.refresh_token import RefreshToken
+    from app.models.weekly_summary import WeeklySummary
 
 
 class User(Base, TimestampMixin):
@@ -27,6 +28,10 @@ class User(Base, TimestampMixin):
         cascade="all, delete-orphan",
     )
     journals: Mapped[list["JournalEntry"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    weekly_summaries: Mapped[list["WeeklySummary"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
