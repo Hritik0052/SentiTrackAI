@@ -113,7 +113,7 @@ are in [`docs/usage/`](docs/usage/).
 | Journals       | `/api/v1/journals`     | [phase 5](docs/usage/phase-05-journal.md)                    |
 | Sentiment      | `/api/v1/journals/...` | [phase 7](docs/usage/phase-07-sentiment.md)                  |
 | Summary        | `/api/v1/summary`      | [phase 8](docs/usage/phase-08-weekly-summary.md)            |
-| Analytics      | `/api/v1/analytics`    | _coming in Phase 9_                                          |
+| Analytics      | `/api/v1/analytics`    | [phase 9](docs/usage/phase-09-analytics.md)                  |
 | Search         | `/api/v1/search`       | _coming in Phase 10_                                         |
 | Insights       | `/api/v1/insights`     | _coming in Phase 11_                                         |
 
@@ -134,8 +134,8 @@ local planning docs (`DEVELOPMENT_PLAN.md`, `CHECKLIST.md`).
 - ✅ **Phase 6** — AI integration (OpenRouter, retry/fallback, safe JSON parsing)
 - ✅ **Phase 7** — Sentiment analysis (analyze journal → store mood/sentiment/emotion)
 - ✅ **Phase 8** — Weekly summaries (AI digest + suggestions per week)
-- ⏳ **Phase 9** — Analytics ← _next_
-- ☐ **Phase 10** — Search
+- ✅ **Phase 9** — Analytics (dashboard, mood distribution, streaks, monthly/yearly)
+- ⏳ **Phase 10** — Search ← _next_
 - ☐ **Phase 11** — AI insights
 - ☐ **Phase 12–20** — Background tasks, caching, testing, docs, Docker, deployment, production hardening
 
