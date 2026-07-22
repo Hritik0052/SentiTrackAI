@@ -12,7 +12,8 @@ from app.dependencies.auth import get_current_user
 from app.dependencies.pagination import PaginationParams, get_pagination
 from app.models.user import User
 from app.schemas.journal import JournalCreate, JournalListResponse, JournalRead, JournalUpdate
-from app.services import journal_service
+from app.schemas.sentiment import SentimentRead
+from app.services import journal_service, sentiment_service
 
 router = APIRouter(prefix="/journals", tags=["journals"])
 
@@ -87,3 +88,35 @@ def delete_journal(
 ) -> None:
     entry = journal_service.get_journal(db, current_user.id, journal_id)
     journal_service.delete_journal(db, entry)
+
+
+@router.post(
+    "/{journal_id}/analyze",
+    response_model=SentimentRead,
+    summary="Analyze a journal entry's sentiment via AI",
+)
+def analyze_journal(
+    journal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SentimentRead:
+    """Run AI sentiment analysis on the entry and store the result.
+
+    Re-running overwrites the previous analysis. Returns `502` if the AI
+    provider is unavailable or returns a malformed response.
+    """
+    return sentiment_service.analyze_journal(db, current_user.id, journal_id)
+
+
+@router.get(
+    "/{journal_id}/sentiment",
+    response_model=SentimentRead,
+    summary="Get the stored sentiment for a journal entry",
+)
+def get_journal_sentiment(
+    journal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SentimentRead:
+    """Return the stored analysis, or `404` if the entry hasn't been analyzed yet."""
+    return sentiment_service.get_sentiment(db, current_user.id, journal_id)

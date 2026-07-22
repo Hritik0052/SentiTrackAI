@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.sentiment import Sentiment
     from app.models.user import User
 
 
@@ -24,6 +25,11 @@ class JournalEntry(Base, TimestampMixin):
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="journals")
+    sentiment: Mapped["Sentiment | None"] = relationship(
+        back_populates="journal",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<JournalEntry id={self.id} user_id={self.user_id}>"
