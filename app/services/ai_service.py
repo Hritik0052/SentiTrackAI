@@ -49,6 +49,15 @@ _SUMMARY_SYSTEM_PROMPT = (
     "— no JSON, no headers, no bullet points."
 )
 
+_INSIGHTS_SYSTEM_PROMPT = (
+    "You are an insightful journaling analyst. Given a summary of a user's journaling "
+    "history and mood statistics, respond with ONLY a JSON array (no markdown, no "
+    "commentary) of 3-5 short, specific, natural-language insights about the user's "
+    "emotional patterns, habits, and trends. Each item is one sentence, addressed to "
+    'the user, e.g. ["You tend to feel more positive on weekends.", "Your journaling '
+    'has been highly consistent this month."].'
+)
+
 _WEEKLY_SUMMARY_SYSTEM_PROMPT = (
     "You are a supportive journaling coach. Given a user's journal entries from a "
     "single week, respond with ONLY a single JSON object (no markdown, no "
@@ -266,3 +275,18 @@ def generate_weekly_summary(entries: list[str] | str) -> dict:
     suggestions = [str(item).strip() for item in raw_suggestions if str(item).strip()]
 
     return {"summary": summary, "suggestions": suggestions[:4]}
+
+
+def generate_insights(context: str) -> list[str]:
+    """Return up to 5 natural-language insight sentences from a history/stats summary."""
+    raw = _chat_completion(
+        [
+            {"role": "system", "content": _INSIGHTS_SYSTEM_PROMPT},
+            {"role": "user", "content": context},
+        ]
+    )
+    data = _extract_json_array(raw)
+    insights = [str(item).strip() for item in data if str(item).strip()]
+    if not insights:
+        raise AIServiceError("AI returned no insights")
+    return insights[:5]

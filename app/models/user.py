@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.insight import Insight
     from app.models.journal_entry import JournalEntry
     from app.models.refresh_token import RefreshToken
     from app.models.weekly_summary import WeeklySummary
@@ -32,6 +33,10 @@ class User(Base, TimestampMixin):
         cascade="all, delete-orphan",
     )
     weekly_summaries: Mapped[list["WeeklySummary"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    insights: Mapped[list["Insight"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

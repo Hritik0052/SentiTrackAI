@@ -115,7 +115,7 @@ are in [`docs/usage/`](docs/usage/).
 | Summary        | `/api/v1/summary`      | [phase 8](docs/usage/phase-08-weekly-summary.md)            |
 | Analytics      | `/api/v1/analytics`    | [phase 9](docs/usage/phase-09-analytics.md)                  |
 | Search         | `/api/v1/search`       | [phase 10](docs/usage/phase-10-search.md)                    |
-| Insights       | `/api/v1/insights`     | _coming in Phase 11_                                         |
+| Insights       | `/api/v1/insights`     | [phase 11](docs/usage/phase-11-insights.md)                  |
 
 A consolidated `API.md` reference lands in Phase 16.
 
@@ -136,8 +136,8 @@ local planning docs (`DEVELOPMENT_PLAN.md`, `CHECKLIST.md`).
 - ✅ **Phase 8** — Weekly summaries (AI digest + suggestions per week)
 - ✅ **Phase 9** — Analytics (dashboard, mood distribution, streaks, monthly/yearly)
 - ✅ **Phase 10** — Search (keyword / date range / mood / emotion / sentiment filters)
-- ⏳ **Phase 11** — AI insights ← _next_
-- ☐ **Phase 12–20** — Background tasks, caching, testing, docs, Docker, deployment, production hardening
+- ✅ **Phase 11** — AI insights (generate + store natural-language observations)
+- ⏳ **Phase 12–20** — Background tasks, caching, testing, docs, Docker, deployment, production hardening
 
 ---
 
