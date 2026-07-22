@@ -111,7 +111,7 @@ are in [`docs/usage/`](docs/usage/).
 | Users          | `/api/v1/users`        | [phase 3](docs/usage/phase-03-users.md)                      |
 | Auth           | `/api/v1/auth`         | [phase 4](docs/usage/phase-04-authentication.md)             |
 | Journals       | `/api/v1/journals`     | [phase 5](docs/usage/phase-05-journal.md)                    |
-| Sentiment      | `/api/v1/journals/...` | _coming in Phase 7_                                          |
+| Sentiment      | `/api/v1/journals/...` | [phase 7](docs/usage/phase-07-sentiment.md)                  |
 | Summary        | `/api/v1/summary`      | _coming in Phase 8_                                          |
 | Analytics      | `/api/v1/analytics`    | _coming in Phase 9_                                          |
 | Search         | `/api/v1/search`       | _coming in Phase 10_                                         |
@@ -132,8 +132,8 @@ local planning docs (`DEVELOPMENT_PLAN.md`, `CHECKLIST.md`).
 - ✅ **Phase 4** — Authentication (login / refresh / logout)
 - ✅ **Phase 5** — Journal CRUD (pagination / sort / search)
 - ✅ **Phase 6** — AI integration (OpenRouter, retry/fallback, safe JSON parsing)
-- ⏳ **Phase 7** — Sentiment analysis ← _next_
-- ☐ **Phase 8** — Weekly summaries
+- ✅ **Phase 7** — Sentiment analysis (analyze journal → store mood/sentiment/emotion)
+- ⏳ **Phase 8** — Weekly summaries ← _next_
 - ☐ **Phase 9** — Analytics
 - ☐ **Phase 10** — Search
 - ☐ **Phase 11** — AI insights
