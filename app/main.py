@@ -1,6 +1,7 @@
 """FastAPI application entrypoint.
 
 Run locally:  uvicorn app.main:app --reload
+Run from settings:  python -m app.main
 """
 
 from contextlib import asynccontextmanager
@@ -63,3 +64,14 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+def run() -> None:
+    """Start Uvicorn using host/port from environment settings."""
+    import uvicorn
+
+    uvicorn.run("app.main:app", host=settings.host, port=settings.port)
+
+
+if __name__ == "__main__":
+    run()
