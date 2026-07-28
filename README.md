@@ -23,15 +23,6 @@ Completed through Phase 11:
 - **Advanced search** - keyword, date range, mood, emotion, and sentiment filters
 - **AI insights** - natural-language observations generated from journal history
 
-Planned in later phases:
-
-- **Background processing** - analysis runs off the request path (Phase 12)
-- **Caching** - Redis cache for dashboard/summary where useful (Phase 13)
-- **Testing** - pytest suite with FastAPI TestClient (Phase 15)
-- **API documentation** - consolidated `API.md` (Phase 16)
-- **Dockerized runtime** - app plus PostgreSQL via docker-compose (Phase 17)
-- **Deployment and production hardening** - deployment notes, rate limiting, security headers, and CI/CD (Phases 18-20)
-
 ---
 
 ## Tech Stack
