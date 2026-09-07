@@ -14,6 +14,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import BadRequestError
 from app.models.journal_entry import JournalEntry
 from app.models.sentiment import Sentiment
 
@@ -170,3 +171,129 @@ def get_yearly(db: Session, user_id: int) -> dict:
 
     years = [_period_stat(period, buckets[period]) for period in sorted(buckets)]
     return {"years": years}
+
+
+def _normalize_emotion(value: str | None) -> str | None:
+    if not value:
+        return None
+    normalized = value.strip().lower()
+    return normalized or None
+
+
+def _month_bounds(day: date) -> tuple[date, date]:
+    start = day.replace(day=1)
+    if start.month == 12:
+        end = date(start.year, 12, 31)
+    else:
+        end = date(start.year, start.month + 1, 1) - timedelta(days=1)
+    return start, end
+
+
+def _daterange(start: date, end: date) -> list[date]:
+    days = (end - start).days
+    return [start + timedelta(days=offset) for offset in range(days + 1)]
+
+
+def _build_mood_trends(
+    rows: list[_Row],
+    *,
+    period: str,
+    start: date,
+    end: date,
+    top_emotions: int,
+) -> dict:
+    in_range = [r for r in rows if start <= r.created_at.date() <= end]
+    analyzed = [r for r in in_range if r.sentiment]
+
+    emotion_counter: Counter[str] = Counter()
+    for row in analyzed:
+        emotion = _normalize_emotion(row.emotion)
+        if emotion:
+            emotion_counter[emotion] += 1
+
+    emotion_series = [label for label, _ in emotion_counter.most_common(top_emotions)]
+
+    by_day: dict[date, list[_Row]] = defaultdict(list)
+    for row in analyzed:
+        by_day[row.created_at.date()].append(row)
+
+    buckets: list[dict] = []
+    for day in _daterange(start, end):
+        day_rows = by_day.get(day, [])
+        day_emotions: dict[str, int] = {label: 0 for label in emotion_series}
+        for row in day_rows:
+            emotion = _normalize_emotion(row.emotion)
+            if emotion in day_emotions:
+                day_emotions[emotion] += 1
+        buckets.append(
+            {
+                "date": day,
+                "sentiment": _sentiment_counts(day_rows),
+                "emotions": day_emotions,
+            }
+        )
+
+    return {
+        "period": period,
+        "start": start,
+        "end": end,
+        "granularity": "day",
+        "buckets": buckets,
+        "series": {
+            "sentiment": list(_SENTIMENT_KEYS),
+            "emotions": emotion_series,
+        },
+        "totals": {
+            "entries": len(in_range),
+            "analyzed": len(analyzed),
+            "sentiment_counts": _sentiment_counts(analyzed),
+            "emotion_counts": {label: emotion_counter.get(label, 0) for label in emotion_series},
+        },
+    }
+
+
+def get_mood_trends(
+    db: Session,
+    user_id: int,
+    *,
+    period: str = "week",
+    anchor: date | None = None,
+    top_emotions: int = 5,
+) -> dict:
+    day = anchor or date.today()
+    if period == "week":
+        start, end = _week_bounds(day)
+    elif period == "month":
+        start, end = _month_bounds(day)
+    else:
+        raise BadRequestError("period must be 'week' or 'month'")
+
+    return _build_mood_trends(
+        _load_rows(db, user_id),
+        period=period,
+        start=start,
+        end=end,
+        top_emotions=top_emotions,
+    )
+
+
+def get_mood_trends_compare(
+    db: Session,
+    user_id: int,
+    *,
+    date_from: date,
+    date_to: date,
+    top_emotions: int = 5,
+) -> dict:
+    if date_from > date_to:
+        raise BadRequestError("from must be on or before to")
+    if (date_to - date_from).days > 90:
+        raise BadRequestError("Custom mood-trend range cannot exceed 90 days")
+
+    return _build_mood_trends(
+        _load_rows(db, user_id),
+        period="custom",
+        start=date_from,
+        end=date_to,
+        top_emotions=top_emotions,
+    )

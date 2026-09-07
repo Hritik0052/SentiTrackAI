@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -53,3 +54,31 @@ class MonthlyAnalytics(BaseModel):
 
 class YearlyAnalytics(BaseModel):
     years: list[PeriodStat]
+
+
+class MoodTrendSeries(BaseModel):
+    sentiment: list[str] = Field(description="Always positive, neutral, negative")
+    emotions: list[str] = Field(description="Top emotion labels in the selected range")
+
+
+class MoodTrendTotals(BaseModel):
+    entries: int
+    analyzed: int
+    sentiment_counts: dict[str, int]
+    emotion_counts: dict[str, int]
+
+
+class MoodTrendBucket(BaseModel):
+    date: date
+    sentiment: dict[str, int]
+    emotions: dict[str, int]
+
+
+class MoodTrends(BaseModel):
+    period: Literal["week", "month", "custom"]
+    start: date
+    end: date
+    granularity: Literal["day"] = "day"
+    buckets: list[MoodTrendBucket]
+    series: MoodTrendSeries
+    totals: MoodTrendTotals
