@@ -70,6 +70,9 @@ def generate_weekly_summary(
 
     db.commit()
     db.refresh(record)
+    from app.services import gamification_hooks
+
+    gamification_hooks.after_weekly_summary(db, user_id)
     return record
 
 

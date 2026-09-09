@@ -68,6 +68,9 @@ def generate_insights(db: Session, user_id: int) -> list[Insight]:
     db.commit()
     for insight in insights:
         db.refresh(insight)
+    from app.services import gamification_hooks
+
+    gamification_hooks.after_insights_generated(db, user_id)
     return insights
 
 

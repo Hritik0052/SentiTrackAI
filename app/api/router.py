@@ -6,6 +6,7 @@ from app.api.routes import (
     analytics,
     auth,
     export,
+    gamification,
     health,
     insights,
     journals,
@@ -29,5 +30,6 @@ v1_router.include_router(analytics.router)
 v1_router.include_router(search.router)
 v1_router.include_router(insights.router)
 v1_router.include_router(export.router)
+v1_router.include_router(gamification.router)
 
 api_router.include_router(v1_router)

@@ -36,6 +36,9 @@ def analyze_journal(db: Session, user_id: int, journal_id: int) -> Sentiment:
 
     db.commit()
     db.refresh(sentiment)
+    from app.services import gamification_hooks
+
+    gamification_hooks.after_sentiment_analyzed(db, user_id)
     return sentiment
 
 

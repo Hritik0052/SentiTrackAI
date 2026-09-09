@@ -22,6 +22,9 @@ def create_journal(db: Session, user_id: int, payload: JournalCreate) -> Journal
     db.add(entry)
     db.commit()
     db.refresh(entry)
+    from app.services import gamification_hooks
+
+    gamification_hooks.after_journal_created(db, user_id)
     return entry
 
 

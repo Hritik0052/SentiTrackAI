@@ -13,7 +13,11 @@ if TYPE_CHECKING:
     from app.models.insight import Insight
     from app.models.journal_entry import JournalEntry
     from app.models.refresh_token import RefreshToken
+    from app.models.streak_profile import StreakProfile
+    from app.models.user_badge import UserBadge
+    from app.models.user_challenge import UserChallenge
     from app.models.weekly_summary import WeeklySummary
+    from app.models.xp_profile import XpProfile
 
 
 class User(Base, TimestampMixin):
@@ -37,6 +41,24 @@ class User(Base, TimestampMixin):
         cascade="all, delete-orphan",
     )
     insights: Mapped[list["Insight"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    streak_profile: Mapped["StreakProfile | None"] = relationship(
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    xp_profile: Mapped["XpProfile | None"] = relationship(
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    badges: Mapped[list["UserBadge"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    challenges: Mapped[list["UserChallenge"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
