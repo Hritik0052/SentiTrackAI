@@ -1,27 +1,28 @@
 # SentiTrack AI
 
 > An AI-powered personal journaling backend that turns daily entries into
-> sentiment insights, weekly summaries, and mood analytics with FastAPI and
-> OpenRouter LLMs.
+> sentiment insights, weekly summaries, mood analytics, Excel exports, and
+> gamification (streaks, XP, badges, challenges) with FastAPI and OpenRouter LLMs.
 
 SentiTrack AI is a REST backend for private journaling. Users can create journal
 entries, analyze them for mood and sentiment, generate weekly summaries, review
-analytics, search their history, and store AI-generated insights. The project is
-being built incrementally by phase.
+analytics and multi-line mood trends, export data to Excel, earn XP and badges,
+and store AI-generated insights.
 
 ---
 
 ## Features
 
-Completed through Phase 11:
-
-- **JWT authentication** - register, login, refresh, logout with hashed passwords
-- **Journal CRUD** - create, read, update, delete entries with pagination, sorting, and search
-- **AI sentiment analysis** - mood, sentiment, emotion, and confidence via OpenRouter
-- **Weekly summaries** - one AI digest plus suggestions per week
-- **Analytics** - mood distribution, streaks, averages, monthly trends, and yearly trends
-- **Advanced search** - keyword, date range, mood, emotion, and sentiment filters
-- **AI insights** - natural-language observations generated from journal history
+- **JWT authentication** — register, login, refresh, logout with hashed passwords
+- **Journal CRUD** — create, read, update, delete entries with pagination, sorting, and search
+- **AI sentiment analysis** — mood, sentiment, emotion, and confidence via OpenRouter
+- **Weekly summaries** — one AI digest plus suggestions per week
+- **Analytics** — mood distribution, streaks, averages, monthly/yearly trends
+- **Mood trends** — daily multi-line series for sentiment and top emotions (`week` / `month` / custom range)
+- **Excel export** — journals, weekly summaries, and monthly summary workbooks (openpyxl)
+- **Gamification** — soft streaks with freeze tokens, XP/levels, PNG-key badges, weekly challenges
+- **Advanced search** — keyword, date range, mood, emotion, and sentiment filters
+- **AI insights** — natural-language observations generated from journal history
 
 ---
 
@@ -32,13 +33,14 @@ Completed through Phase 11:
 | Language         | Python 3.11+                                    |
 | Web framework    | FastAPI + Uvicorn                               |
 | ORM / migrations | SQLAlchemy 2.0 + Alembic                        |
-| Database         | PostgreSQL (prod) / SQLite (zero-config dev)    |
+| Database         | PostgreSQL / Neon (prod) · SQLite (local default) |
 | Auth             | PyJWT + bcrypt                                  |
 | Validation       | Pydantic v2 / pydantic-settings                 |
 | AI provider      | OpenRouter                                      |
+| Excel            | openpyxl                                        |
 | HTTP client      | httpx                                           |
-| Testing          | pytest + FastAPI TestClient (planned Phase 15)  |
-| Packaging        | Docker + docker-compose (planned Phase 17)      |
+| Testing          | pytest + FastAPI TestClient                     |
+| Hosting          | Render (`render.yaml`)                          |
 
 ---
 
@@ -49,14 +51,15 @@ app/
   main.py            # App factory, middleware, router wiring
   core/              # config, logging, security, exceptions
   database/          # engine, session, declarative Base
-  models/            # SQLAlchemy ORM models
+  models/            # SQLAlchemy ORM models (incl. gamification)
   schemas/           # Pydantic request/response models
   dependencies/      # get_db, get_current_user, pagination
-  services/          # business logic
+  services/          # business logic + gamification hooks
+  gamification/      # badge & challenge catalogs
   api/routes/        # thin HTTP routers per resource
 alembic/             # database migrations
 docs/usage/          # phase-wise API-flow guides
-tests/               # planned pytest suite
+tests/               # pytest suite (incl. trends/export smoke tests)
 ```
 
 ---
@@ -66,7 +69,7 @@ tests/               # planned pytest suite
 ### 1. Prerequisites
 
 - Python 3.11+
-- Optional: PostgreSQL 14+; SQLite is used by default for local development
+- Optional: PostgreSQL / Neon; SQLite is used by default for local development
 
 ### 2. Install
 
@@ -89,10 +92,13 @@ cp .env.example .env
 ```
 
 Edit `.env` and set at least `JWT_SECRET_KEY` and your `OPENROUTER_API_KEY`.
-Keep the default `DATABASE_URL` for SQLite, or point it at PostgreSQL.
+Keep the default `DATABASE_URL` for SQLite, or point it at PostgreSQL/Neon:
+
+```env
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DB?sslmode=require
+```
 
 If you override `DEBUG`, use a boolean-like value such as `true`, `false`, `1`, or `0`.
-Values like `release` are invalid for the current Pydantic settings field.
 `HOST` and `PORT` control the settings-driven server runner used by `python -m app.main`.
 
 ### 4. Migrate And Run
@@ -112,13 +118,18 @@ python -m app.main
 - ReDoc: http://127.0.0.1:8000/redoc
 - Health: http://127.0.0.1:8000/health
 
+### 5. Tests (optional)
+
+```bash
+pytest tests/test_mood_trends_and_export.py -q
+```
+
 ---
 
 ## Render Deployment
 
-Render web services must listen on the host `0.0.0.0` and the port provided by
-the `PORT` environment variable. This project supports that through `HOST` and
-`PORT` settings loaded from the environment. Do not use `--reload` on Render.
+Render web services must listen on `0.0.0.0` and the `PORT` environment variable.
+Do not use `--reload` on Render.
 
 Manual Render settings:
 
@@ -139,61 +150,78 @@ HOST=0.0.0.0
 PORT=10000
 JWT_SECRET_KEY=<long-random-secret>
 OPENROUTER_API_KEY=<your-openrouter-key>
-DATABASE_URL=<render-postgres-internal-database-url>
+DATABASE_URL=<neon-or-postgres-url>
 ```
 
-This repository also includes [`render.yaml`](render.yaml) with the same service
-configuration for Render Blueprint deployments.
+**Note (Render free / no shell):** you can run `alembic upgrade head` locally against
+the same Neon `DATABASE_URL` before pushing; Render’s pre-deploy will then usually
+be a no-op. This repo includes [`render.yaml`](render.yaml) for Blueprint deploys.
 
 ---
 
 ## API Overview
 
-Feature endpoints live under `/api/v1`. Full request/response examples for each
-module are in [`docs/usage/`](docs/usage/).
+Feature endpoints live under `/api/v1`. Full request/response examples for older
+modules are in [`docs/usage/`](docs/usage/). Use Swagger for the newest routes.
 
-| Module        | Base path              | Guide                                             |
-|---------------|------------------------|---------------------------------------------------|
-| Health / meta | `/`, `/health`         | [phase 1](docs/usage/phase-01-project-init.md)    |
-| Database      | N/A                    | [phase 2](docs/usage/phase-02-database.md)        |
-| Users         | `/api/v1/users`        | [phase 3](docs/usage/phase-03-users.md)           |
-| Auth          | `/api/v1/auth`         | [phase 4](docs/usage/phase-04-authentication.md)  |
-| Journals      | `/api/v1/journals`     | [phase 5](docs/usage/phase-05-journal.md)         |
-| Sentiment     | `/api/v1/journals/...` | [phase 7](docs/usage/phase-07-sentiment.md)       |
-| Summary       | `/api/v1/summary`      | [phase 8](docs/usage/phase-08-weekly-summary.md)  |
-| Analytics     | `/api/v1/analytics`    | [phase 9](docs/usage/phase-09-analytics.md)       |
-| Search        | `/api/v1/search`       | [phase 10](docs/usage/phase-10-search.md)         |
-| Insights      | `/api/v1/insights`     | [phase 11](docs/usage/phase-11-insights.md)       |
+| Module         | Base path                    | Notes |
+|----------------|------------------------------|-------|
+| Health / meta  | `/`, `/health`               | Liveness |
+| Users          | `/api/v1/users`              | Register / profile |
+| Auth           | `/api/v1/auth`               | Login, refresh, logout |
+| Journals       | `/api/v1/journals`           | CRUD + analyze (awards XP/badges) |
+| Sentiment      | `/api/v1/journals/{id}/...`  | Analyze / read sentiment |
+| Summary        | `/api/v1/summary`            | Weekly digests |
+| Analytics      | `/api/v1/analytics`          | Dashboard, distribution, monthly/yearly |
+| Mood trends    | `/api/v1/analytics/mood-trends` | Week/month multi-line series |
+| Mood compare   | `/api/v1/analytics/mood-trends/compare` | Custom range (max 90 days) |
+| Export         | `/api/v1/export`             | `.xlsx` journals / summaries / monthly |
+| Search         | `/api/v1/search`             | Filters |
+| Insights       | `/api/v1/insights`           | AI patterns |
+| Gamification   | `/api/v1/gamification`       | `streaks`, `xp`, `badges`, `challenges` |
 
-A consolidated `API.md` reference is planned for Phase 16.
+### Gamification endpoints
 
----
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/gamification/streaks` | Soft streak, freezes, milestones |
+| GET | `/api/v1/gamification/xp` | Level, total XP, recent events |
+| GET | `/api/v1/gamification/badges` | Catalog + unlock state (`image_key` → frontend PNGs) |
+| GET | `/api/v1/gamification/challenges` | This week’s challenges + progress |
 
-## Roadmap And Status
+XP is awarded automatically when users create journals, analyze sentiment, generate
+weekly summaries / insights, or complete challenges.
 
-Detailed acceptance criteria live in [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md),
-[`CHECKLIST.md`](CHECKLIST.md), and [`requirement.md`](requirement.md).
+### Export endpoints
 
-- Done: **Phase 1** - Project initialization
-- Done: **Phase 2** - Database layer
-- Done: **Phase 3** - User module
-- Done: **Phase 4** - Authentication
-- Done: **Phase 5** - Journal CRUD
-- Done: **Phase 6** - AI integration
-- Done: **Phase 7** - Sentiment analysis
-- Done: **Phase 8** - Weekly summaries
-- Done: **Phase 9** - Analytics
-- Done: **Phase 10** - Search
-- Done: **Phase 11** - AI insights
-- Pending: **Phase 12-20** - Background tasks, caching, testing, docs, Docker, deployment, and production hardening
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/export/journals` | Optional `date_from` / `date_to` |
+| GET | `/api/v1/export/weekly-summaries` | Optional date filters |
+| GET | `/api/v1/export/monthly-summary` | Required `year` & `month` |
 
 ---
 
 ## Database Schema
 
-Current planned schema:
+Tables:
 
-`users`, `journal_entries`, `sentiments`, `weekly_summaries`, `insights`, `refresh_tokens`
+`users`, `refresh_tokens`, `journal_entries`, `sentiments`, `weekly_summaries`, `insights`,
+`streak_profiles`, `xp_profiles`, `xp_events`, `user_badges`, `user_challenges`
+
+Badge and challenge **definitions** live in code (`app/gamification/`), not in the DB.
+Only unlock / progress rows are persisted.
+
+---
+
+## Roadmap And Status
+
+- Done: auth, journals, sentiment, summaries, analytics, search, insights
+- Done: mood trends + Excel export
+- Done: gamification (streaks 2.0, XP/levels, badges, weekly challenges)
+- Later: background jobs, caching, broader automated tests, Docker packaging
+
+See also [`requirement.md`](requirement.md).
 
 ---
 
