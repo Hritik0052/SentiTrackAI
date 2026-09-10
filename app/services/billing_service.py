@@ -232,7 +232,7 @@ def get_usage_snapshot(db: Session, user_id: int) -> UsageSnapshot:
     insights_used = _count_usage_events(db, user_id, ACTION_INSIGHTS, week_start, week_end)
 
     return UsageSnapshot(
-        plan=PlanSummary.model_validate(plan) if plan else None,
+        plan=to_plan_summary(plan),
         journals_today=_bucket(
             journals_used, plan.daily_journal_limit if plan else 0
         ),
@@ -309,7 +309,37 @@ def record_usage(db: Session, user_id: int, action: str, *, commit: bool = True)
     return event
 
 
+def resolve_plan_features(plan: SubscriptionPlan) -> list[str]:
+    raw = plan.features
+    if isinstance(raw, str):
+        import json
+
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            raw = None
+    if isinstance(raw, list) and any(str(x).strip() for x in raw):
+        return [str(x).strip() for x in raw if str(x).strip()]
+
+    def line(limit: int | None, unlimited: str, capped: str) -> str:
+        return unlimited if limit is None else capped.format(n=limit)
+
+    return [
+        line(plan.daily_journal_limit, "Unlimited journal entries", "{n} journal entries per day"),
+        line(plan.daily_analyze_limit, "Unlimited AI sentiment analysis", "{n} AI analyses per day"),
+        line(
+            plan.weekly_summary_limit,
+            "Unlimited weekly summaries",
+            "{n} weekly summary per week",
+        ),
+        line(plan.weekly_insights_limit, "Unlimited insights", "{n} insights generation per week"),
+        "Mood trends & Excel export",
+        "Achievements & streaks",
+    ]
+
+
 def to_plan_summary(plan: SubscriptionPlan | None) -> PlanSummary | None:
     if plan is None:
         return None
-    return PlanSummary.model_validate(plan)
+    data = PlanSummary.model_validate(plan)
+    return data.model_copy(update={"features": resolve_plan_features(plan)})

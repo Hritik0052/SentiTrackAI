@@ -15,14 +15,15 @@ from app.schemas.billing import (
     CreateCashfreeOrderResponse,
     PlanSummary,
 )
-from app.services import cashfree_client, cashfree_service
+from app.services import billing_service, cashfree_client, cashfree_service
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 
 @router.get("/plans", response_model=list[PlanSummary], summary="List active subscription plans")
 def list_plans(db: Session = Depends(get_db)) -> list[PlanSummary]:
-    return [PlanSummary.model_validate(p) for p in cashfree_service.list_public_plans(db)]
+    plans = cashfree_service.list_public_plans(db)
+    return [billing_service.to_plan_summary(p) for p in plans]  # type: ignore[misc]
 
 
 @router.get("/me", response_model=BillingMeResponse, summary="Current billing / payment status")

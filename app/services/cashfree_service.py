@@ -87,7 +87,7 @@ def create_checkout_session(
         "order_amount": float(plan.price_inr),
         "order_currency": "INR",
         "env": "production" if settings.cashfree_env.lower() == "production" else "sandbox",
-        "plan": PlanSummary.model_validate(plan),
+        "plan": billing_service.to_plan_summary(plan),
     }
 
 
@@ -167,7 +167,7 @@ def get_billing_me(db: Session, user: User) -> dict:
     sub = billing_service.get_user_subscription(db, user.id)
     plan = sub.plan if sub else None
     return {
-        "plan": PlanSummary.model_validate(plan) if plan else None,
+        "plan": billing_service.to_plan_summary(plan) if plan else None,
         "status": sub.status if sub else None,
         "payment_provider": sub.payment_provider if sub else None,
         "cashfree_order_id": sub.cashfree_order_id if sub else None,

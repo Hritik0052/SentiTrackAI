@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.models.user import User
-from app.schemas.billing import PlanSummary
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.services import billing_service
 
@@ -72,7 +71,7 @@ def to_user_read(db: Session, user: User) -> UserRead:
         name=user.name,
         email=user.email,
         is_admin=bool(user.is_admin),
-        plan=PlanSummary.model_validate(plan) if plan else None,
+        plan=billing_service.to_plan_summary(plan) if plan else None,
         created_at=user.created_at,
         updated_at=user.updated_at,
     )

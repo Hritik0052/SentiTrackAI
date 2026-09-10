@@ -36,7 +36,7 @@ def list_plans(
     _: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> list[PlanSummary]:
-    return [PlanSummary.model_validate(p) for p in billing_service.list_plans(db)]
+    return [billing_service.to_plan_summary(p) for p in billing_service.list_plans(db)]  # type: ignore[misc]
 
 
 @router.post(
@@ -51,7 +51,7 @@ def create_plan(
     db: Session = Depends(get_db),
 ) -> PlanSummary:
     plan = billing_service.create_plan(db, payload)
-    return PlanSummary.model_validate(plan)
+    return billing_service.to_plan_summary(plan)  # type: ignore[return-value]
 
 
 @router.get("/plans/{plan_id}", response_model=PlanSummary, summary="Get a plan")
@@ -60,7 +60,7 @@ def get_plan(
     _: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> PlanSummary:
-    return PlanSummary.model_validate(billing_service.get_plan(db, plan_id))
+    return billing_service.to_plan_summary(billing_service.get_plan(db, plan_id))  # type: ignore[return-value]
 
 
 @router.patch("/plans/{plan_id}", response_model=PlanSummary, summary="Update a plan")
@@ -72,7 +72,7 @@ def patch_plan(
 ) -> PlanSummary:
     plan = billing_service.get_plan(db, plan_id)
     updated = billing_service.update_plan(db, plan, payload)
-    return PlanSummary.model_validate(updated)
+    return billing_service.to_plan_summary(updated)  # type: ignore[return-value]
 
 
 @router.post(
@@ -87,7 +87,7 @@ def set_default_plan(
 ) -> PlanSummary:
     plan = billing_service.get_plan(db, plan_id)
     updated = billing_service.set_default_plan(db, plan)
-    return PlanSummary.model_validate(updated)
+    return billing_service.to_plan_summary(updated)  # type: ignore[return-value]
 
 
 @router.get("/users", summary="List users")

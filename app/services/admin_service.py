@@ -87,7 +87,7 @@ def _to_list_item(user: User) -> AdminUserListItem:
         email=user.email,
         is_admin=user.is_admin,
         created_at=user.created_at,
-        plan=PlanSummary.model_validate(plan) if plan else None,
+        plan=billing_service.to_plan_summary(plan) if plan else None,
         subscription_status=sub.status if sub else None,
     )
 

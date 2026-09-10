@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import Boolean, Integer, JSON, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
@@ -21,6 +21,7 @@ class SubscriptionPlan(Base, TimestampMixin):
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    features: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     daily_journal_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     weekly_summary_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)

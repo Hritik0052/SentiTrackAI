@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PlanSummary(BaseModel):
@@ -14,6 +14,7 @@ class PlanSummary(BaseModel):
     code: str
     name: str
     description: str | None = None
+    features: list[str] = Field(default_factory=list)
     daily_journal_limit: int | None = None
     weekly_summary_limit: int | None = None
     daily_analyze_limit: int | None = None
@@ -23,6 +24,23 @@ class PlanSummary(BaseModel):
     sort_order: int = 0
     price_inr: int | None = None
     billing_period: str | None = None
+
+    @field_validator("features", mode="before")
+    @classmethod
+    def _coerce_features(cls, value):  # noqa: ANN001
+        if value is None:
+            return []
+        if isinstance(value, str):
+            import json
+
+            try:
+                parsed = json.loads(value)
+                return parsed if isinstance(parsed, list) else []
+            except json.JSONDecodeError:
+                return []
+        if isinstance(value, list):
+            return value
+        return []
 
 
 class QuotaBucket(BaseModel):
@@ -43,6 +61,7 @@ class PlanCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=120)
     description: str | None = None
+    features: list[str] | None = None
     daily_journal_limit: int | None = Field(default=None, ge=0)
     weekly_summary_limit: int | None = Field(default=None, ge=0)
     daily_analyze_limit: int | None = Field(default=None, ge=0)
@@ -57,6 +76,7 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     description: str | None = None
+    features: list[str] | None = None
     daily_journal_limit: int | None = Field(default=None, ge=0)
     weekly_summary_limit: int | None = Field(default=None, ge=0)
     daily_analyze_limit: int | None = Field(default=None, ge=0)
