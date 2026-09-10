@@ -33,7 +33,11 @@ def _issue_token_pair(db: Session, user: User) -> TokenResponse:
         )
     )
     db.commit()
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        is_admin=bool(user.is_admin),
+    )
 
 
 def authenticate(db: Session, email: str, password: str) -> User:
