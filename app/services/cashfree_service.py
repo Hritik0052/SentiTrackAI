@@ -109,6 +109,7 @@ def activate_paid_plan(
         plan,
         notes=f"Cashfree order {order_id}",
         status="active",
+        renew_extend=True,
         commit=False,
     )
     sub.payment_provider = "cashfree"
@@ -165,12 +166,35 @@ def handle_payment_webhook(db: Session, payload: dict) -> dict:
 
 def get_billing_me(db: Session, user: User) -> dict:
     sub = billing_service.get_user_subscription(db, user.id)
-    plan = sub.plan if sub else None
+    now = billing_service._now()
+    is_expired = False
+    days_remaining = None
+    plan = None
+    status = None
+    if sub is not None:
+        status = sub.status
+        if sub.status == "active" and billing_service.is_subscription_expired(sub, now=now):
+            sub.status = "expired"
+            db.commit()
+            status = "expired"
+            is_expired = True
+        elif sub.status == "expired":
+            is_expired = True
+        elif sub.status == "active":
+            plan = sub.plan
+            if sub.ends_at is not None:
+                total_seconds = max(0, int((sub.ends_at - now).total_seconds()))
+                days_remaining = (total_seconds + 86399) // 86400
+
     return {
         "plan": billing_service.to_plan_summary(plan) if plan else None,
-        "status": sub.status if sub else None,
+        "status": status,
         "payment_provider": sub.payment_provider if sub else None,
         "cashfree_order_id": sub.cashfree_order_id if sub else None,
+        "starts_at": sub.starts_at if sub else None,
+        "ends_at": sub.ends_at if sub else None,
+        "days_remaining": days_remaining,
+        "is_expired": is_expired,
         "cashfree_configured": settings.cashfree_configured,
         "cashfree_env": "production"
         if settings.cashfree_env.lower() == "production"

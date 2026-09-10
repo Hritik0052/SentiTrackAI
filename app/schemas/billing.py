@@ -24,6 +24,7 @@ class PlanSummary(BaseModel):
     sort_order: int = 0
     price_inr: int | None = None
     billing_period: str | None = None
+    duration_days: int | None = None
 
     @field_validator("features", mode="before")
     @classmethod
@@ -70,6 +71,7 @@ class PlanCreate(BaseModel):
     sort_order: int = 0
     price_inr: int | None = Field(default=None, ge=0)
     billing_period: str | None = Field(default=None, max_length=32)
+    duration_days: int | None = Field(default=None, ge=1)
     cashfree_plan_id: str | None = Field(default=None, max_length=128)
 
 
@@ -85,6 +87,7 @@ class PlanUpdate(BaseModel):
     sort_order: int | None = None
     price_inr: int | None = Field(default=None, ge=0)
     billing_period: str | None = Field(default=None, max_length=32)
+    duration_days: int | None = Field(default=None, ge=1)
     cashfree_plan_id: str | None = Field(default=None, max_length=128)
 
 
@@ -139,5 +142,9 @@ class BillingMeResponse(BaseModel):
     status: str | None = None
     payment_provider: str | None = None
     cashfree_order_id: str | None = None
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    days_remaining: int | None = None
+    is_expired: bool = False
     cashfree_configured: bool
     cashfree_env: str

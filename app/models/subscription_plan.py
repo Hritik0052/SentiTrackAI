@@ -41,6 +41,7 @@ class SubscriptionPlan(Base, TimestampMixin):
     # Phase 2 Cashfree-ready fields
     price_inr: Mapped[int | None] = mapped_column(Integer, nullable=True)
     billing_period: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    duration_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cashfree_plan_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     subscriptions: Mapped[list["UserSubscription"]] = relationship(

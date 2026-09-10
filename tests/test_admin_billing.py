@@ -29,6 +29,9 @@ def _seed_plans(db):
         is_default=True,
         is_active=True,
         sort_order=0,
+        price_inr=0,
+        billing_period="trial",
+        duration_days=15,
     )
     pro = SubscriptionPlan(
         code="pro",
@@ -41,6 +44,9 @@ def _seed_plans(db):
         is_default=False,
         is_active=True,
         sort_order=10,
+        price_inr=499,
+        billing_period="monthly",
+        duration_days=30,
     )
     db.add_all([free, pro])
     db.flush()

@@ -38,6 +38,55 @@ def _now() -> datetime:
     return datetime.utcnow()
 
 
+def plan_duration_days(plan: SubscriptionPlan) -> int:
+    """Validity window in days. Admin-editable; sensible defaults by billing_period."""
+    if plan.duration_days is not None and plan.duration_days > 0:
+        return int(plan.duration_days)
+    period = (plan.billing_period or "").lower()
+    if period in ("trial", "free"):
+        return 15
+    if period == "yearly":
+        return 365
+    return 30
+
+
+def compute_ends_at(starts_at: datetime, plan: SubscriptionPlan) -> datetime:
+    return starts_at + timedelta(days=plan_duration_days(plan))
+
+
+def is_subscription_expired(sub: UserSubscription, *, now: datetime | None = None) -> bool:
+    if sub.ends_at is None:
+        return False
+    return sub.ends_at <= (now or _now())
+
+
+def apply_subscription_window(
+    sub: UserSubscription,
+    plan: SubscriptionPlan,
+    *,
+    renew_extend: bool = False,
+) -> None:
+    """Set starts_at / ends_at from plan.duration_days.
+
+    If renew_extend and the same plan is still active with future ends_at,
+    extend from ends_at (stack another period). Otherwise start a fresh window.
+    """
+    now = _now()
+    days = plan_duration_days(plan)
+    if (
+        renew_extend
+        and sub.plan_id == plan.id
+        and sub.status == "active"
+        and sub.ends_at is not None
+        and sub.ends_at > now
+    ):
+        sub.starts_at = sub.starts_at or now
+        sub.ends_at = sub.ends_at + timedelta(days=days)
+        return
+    sub.starts_at = now
+    sub.ends_at = now + timedelta(days=days)
+
+
 def _day_bounds(day: date | None = None) -> tuple[datetime, datetime]:
     # Naive datetimes match SQLite / TimestampMixin server defaults used elsewhere.
     d = day or date.today()
@@ -86,6 +135,10 @@ def get_user_plan(db: Session, user_id: int) -> SubscriptionPlan | None:
     sub = get_user_subscription(db, user_id)
     if sub is None or sub.status != "active":
         return None
+    if is_subscription_expired(sub):
+        sub.status = "expired"
+        db.commit()
+        return None
     return sub.plan
 
 
@@ -94,11 +147,13 @@ def assign_default_plan(db: Session, user: User, *, commit: bool = False) -> Use
     if existing is not None:
         return existing
     plan = get_default_plan(db)
+    now = _now()
     sub = UserSubscription(
         user_id=user.id,
         plan_id=plan.id,
         status="active",
-        starts_at=_now(),
+        starts_at=now,
+        ends_at=compute_ends_at(now, plan),
         payment_provider="manual",
     )
     db.add(sub)
@@ -117,6 +172,7 @@ def assign_plan(
     *,
     notes: str | None = None,
     status: str = "active",
+    renew_extend: bool = False,
     commit: bool = True,
 ) -> UserSubscription:
     if not plan.is_active and status == "active":
@@ -125,9 +181,10 @@ def assign_plan(
     if sub is None:
         sub = UserSubscription(user_id=user.id, plan_id=plan.id)
         db.add(sub)
+    if status == "active":
+        apply_subscription_window(sub, plan, renew_extend=renew_extend)
     sub.plan_id = plan.id
     sub.status = status
-    sub.starts_at = sub.starts_at or _now()
     if notes is not None:
         sub.notes = notes
     sub.payment_provider = sub.payment_provider or "manual"
@@ -137,7 +194,6 @@ def assign_plan(
     else:
         db.flush()
     return sub
-
 
 def list_plans(db: Session, *, active_only: bool = False) -> list[SubscriptionPlan]:
     stmt = select(SubscriptionPlan).order_by(
@@ -276,8 +332,21 @@ def require_quota(db: Session, user_id: int, action: str) -> None:
         user = db.get(User, user_id)
         if user is None:
             raise NotFoundError("User not found")
-        assign_default_plan(db, user, commit=True)
-        plan = get_user_plan(db, user_id)
+        sub = get_user_subscription(db, user_id)
+        if sub is None:
+            # First-time user: grant default Free trial window.
+            assign_default_plan(db, user, commit=True)
+            plan = get_user_plan(db, user_id)
+        else:
+            # Expired / canceled — do not auto-regrant Free forever.
+            raise BadRequestError(
+                "Your plan has expired. Open Plans to renew or choose a membership."
+            )
+
+    if plan is None:
+        raise BadRequestError(
+            "Your plan has expired. Open Plans to renew or choose a membership."
+        )
 
     limit = _limit_for_action(plan, action)
     if limit is None:
