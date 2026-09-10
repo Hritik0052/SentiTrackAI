@@ -37,8 +37,10 @@ class Settings(BaseSettings):
     # --- OpenRouter ---
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_model: str = "google/gemma-3-27b-it:free"
-    openrouter_fallback_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    # Free-tier model IDs change on OpenRouter; keep these in sync with
+    # https://openrouter.ai/collections/free-models (or set env overrides on Render).
+    openrouter_model: str = "google/gemma-4-31b-it:free"
+    openrouter_fallback_model: str = "google/gemma-4-26b-a4b-it:free"
     openrouter_timeout: float = 30.0
     openrouter_max_retries: int = 3
 
