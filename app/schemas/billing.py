@@ -98,3 +98,26 @@ class AdminStats(BaseModel):
     weekly_summaries_today: int
     insights_today: int
     plan_counts: dict[str, int]
+
+
+class CreateCashfreeOrderRequest(BaseModel):
+    plan_code: str = Field(default="pro", min_length=1, max_length=64)
+    customer_phone: str | None = Field(default=None, max_length=15)
+
+
+class CreateCashfreeOrderResponse(BaseModel):
+    order_id: str
+    payment_session_id: str
+    order_amount: float
+    order_currency: str
+    env: str
+    plan: PlanSummary
+
+
+class BillingMeResponse(BaseModel):
+    plan: PlanSummary | None = None
+    status: str | None = None
+    payment_provider: str | None = None
+    cashfree_order_id: str | None = None
+    cashfree_configured: bool
+    cashfree_env: str

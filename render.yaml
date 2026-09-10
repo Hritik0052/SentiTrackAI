@@ -24,3 +24,18 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      # Cashfree — set real values in Render Dashboard (never commit secrets)
+      - key: CASHFREE_ENV
+        sync: false
+      - key: CASHFREE_APP_ID
+        sync: false
+      - key: CASHFREE_SECRET_KEY
+        sync: false
+      - key: CASHFREE_WEBHOOK_SECRET
+        sync: false
+      - key: CASHFREE_API_VERSION
+        value: "2023-08-01"
+      - key: CASHFREE_RETURN_URL
+        value: "https://sentitrackai.netlify.app/app/billing/return"
+      - key: CASHFREE_WEBHOOK_URL
+        value: "https://sentitrackai.onrender.com/api/v1/billing/cashfree/webhook"

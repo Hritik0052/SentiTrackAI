@@ -180,6 +180,7 @@ modules are in [`docs/usage/`](docs/usage/). Use Swagger for the newest routes.
 | Insights       | `/api/v1/insights`           | AI patterns |
 | Gamification   | `/api/v1/gamification`       | `streaks`, `xp`, `badges`, `challenges` |
 | Admin          | `/api/v1/admin`              | Plans, users, stats (`is_admin` required) |
+| Billing        | `/api/v1/billing`            | Plans, Cashfree checkout + webhook |
 
 ### Admin / billing endpoints
 
@@ -193,6 +194,17 @@ modules are in [`docs/usage/`](docs/usage/). Use Swagger for the newest routes.
 | POST | `/api/v1/admin/plans/{id}/set-default` | Default plan for new users |
 | GET | `/api/v1/admin/users` | Paginated users (+ search `q`) |
 | GET/PATCH | `/api/v1/admin/users/{id}` | Detail / assign plan / toggle admin |
+
+### Cashfree billing endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/billing/plans` | Active plans (incl. Pro price) |
+| GET | `/api/v1/billing/me` | Plan + payment provider + Cashfree ready flag |
+| POST | `/api/v1/billing/cashfree/create-order` | Start Pro checkout (auth) |
+| POST | `/api/v1/billing/cashfree/webhook` | Cashfree webhook (signature verified; no JWT) |
+
+Set secrets in Render / local `.env` only (`CASHFREE_*`). Configure Cashfree Dashboard webhook URL to the webhook path above.
 
 Create an admin locally:
 
@@ -241,7 +253,8 @@ Only unlock / progress rows are persisted.
 - Done: mood trends + Excel export
 - Done: gamification (streaks 2.0, XP/levels, badges, weekly challenges)
 - Done: admin flag, subscription plans, quotas, admin APIs (manual plan assignment)
-- Later: Cashfree checkout, background jobs, caching, Docker packaging
+- Done: Cashfree create-order + webhook Pro upgrade
+- Later: background jobs, caching, Docker packaging
 
 See also [`requirement.md`](requirement.md).
 
