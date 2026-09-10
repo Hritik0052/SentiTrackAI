@@ -60,11 +60,16 @@ def generate_insights(db: Session, user_id: int) -> list[Insight]:
     if dashboard["total_entries"] == 0:
         raise BadRequestError("No journal entries to generate insights from")
 
+    from app.services import billing_service
+
+    billing_service.require_quota(db, user_id, billing_service.ACTION_INSIGHTS)
+
     context = _build_context(db, user_id, dashboard)
     statements = ai_service.generate_insights(context)
 
     insights = [Insight(user_id=user_id, content=statement) for statement in statements]
     db.add_all(insights)
+    billing_service.record_usage(db, user_id, billing_service.ACTION_INSIGHTS, commit=False)
     db.commit()
     for insight in insights:
         db.refresh(insight)

@@ -20,6 +20,10 @@ def analyze_journal(db: Session, user_id: int, journal_id: int) -> Sentiment:
     Raises ``NotFoundError`` if the entry doesn't exist or isn't owned by the user,
     and ``AIServiceError`` (502) if the AI provider fails or returns garbage.
     """
+    from app.services import billing_service
+
+    billing_service.require_quota(db, user_id, billing_service.ACTION_ANALYZE)
+
     entry = journal_service.get_journal(db, user_id, journal_id)
     result = ai_service.analyze_sentiment(entry.content)
 
@@ -34,6 +38,7 @@ def analyze_journal(db: Session, user_id: int, journal_id: int) -> Sentiment:
     sentiment.confidence = result["confidence"]
     sentiment.raw_response = result["raw_response"]
 
+    billing_service.record_usage(db, user_id, billing_service.ACTION_ANALYZE, commit=False)
     db.commit()
     db.refresh(sentiment)
     from app.services import gamification_hooks

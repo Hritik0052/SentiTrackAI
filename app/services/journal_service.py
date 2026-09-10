@@ -18,6 +18,10 @@ SORTABLE_FIELDS = {
 
 
 def create_journal(db: Session, user_id: int, payload: JournalCreate) -> JournalEntry:
+    from app.services import billing_service
+
+    billing_service.require_quota(db, user_id, billing_service.ACTION_JOURNAL)
+
     entry = JournalEntry(user_id=user_id, title=payload.title, content=payload.content)
     db.add(entry)
     db.commit()

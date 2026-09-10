@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.exceptions import UnauthorizedError
+from app.core.exceptions import ForbiddenError, UnauthorizedError
 from app.core.security import decode_token
 from app.database import get_db
 from app.models.user import User
@@ -42,3 +42,9 @@ def get_current_user(
     if user is None:
         raise UnauthorizedError("User no longer exists")
     return user
+
+
+def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.is_admin:
+        raise ForbiddenError("Admin access required")
+    return current_user

@@ -179,6 +179,26 @@ modules are in [`docs/usage/`](docs/usage/). Use Swagger for the newest routes.
 | Search         | `/api/v1/search`             | Filters |
 | Insights       | `/api/v1/insights`           | AI patterns |
 | Gamification   | `/api/v1/gamification`       | `streaks`, `xp`, `badges`, `challenges` |
+| Admin          | `/api/v1/admin`              | Plans, users, stats (`is_admin` required) |
+
+### Admin / billing endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/users/me` | Includes `is_admin` + current `plan` |
+| GET | `/api/v1/users/me/usage` | Quota used / limit / remaining |
+| GET | `/api/v1/admin/stats` | Overview KPIs |
+| GET/POST | `/api/v1/admin/plans` | List / create plans |
+| GET/PATCH | `/api/v1/admin/plans/{id}` | Read / update plan |
+| POST | `/api/v1/admin/plans/{id}/set-default` | Default plan for new users |
+| GET | `/api/v1/admin/users` | Paginated users (+ search `q`) |
+| GET/PATCH | `/api/v1/admin/users/{id}` | Detail / assign plan / toggle admin |
+
+Create an admin locally:
+
+```powershell
+python -m app.cli.create_admin --email YOU@example.com --password "YourStrongPass123" --name "Admin"
+```
 
 ### Gamification endpoints
 
@@ -206,8 +226,9 @@ weekly summaries / insights, or complete challenges.
 
 Tables:
 
-`users`, `refresh_tokens`, `journal_entries`, `sentiments`, `weekly_summaries`, `insights`,
-`streak_profiles`, `xp_profiles`, `xp_events`, `user_badges`, `user_challenges`
+`users` (incl. `is_admin`), `refresh_tokens`, `journal_entries`, `sentiments`, `weekly_summaries`, `insights`,
+`streak_profiles`, `xp_profiles`, `xp_events`, `user_badges`, `user_challenges`,
+`subscription_plans`, `user_subscriptions`, `usage_events`
 
 Badge and challenge **definitions** live in code (`app/gamification/`), not in the DB.
 Only unlock / progress rows are persisted.
@@ -219,7 +240,8 @@ Only unlock / progress rows are persisted.
 - Done: auth, journals, sentiment, summaries, analytics, search, insights
 - Done: mood trends + Excel export
 - Done: gamification (streaks 2.0, XP/levels, badges, weekly challenges)
-- Later: background jobs, caching, broader automated tests, Docker packaging
+- Done: admin flag, subscription plans, quotas, admin APIs (manual plan assignment)
+- Later: Cashfree checkout, background jobs, caching, Docker packaging
 
 See also [`requirement.md`](requirement.md).
 

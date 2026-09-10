@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
+from sqlalchemy import Boolean, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
@@ -14,8 +14,10 @@ if TYPE_CHECKING:
     from app.models.journal_entry import JournalEntry
     from app.models.refresh_token import RefreshToken
     from app.models.streak_profile import StreakProfile
+    from app.models.usage_event import UsageEvent
     from app.models.user_badge import UserBadge
     from app.models.user_challenge import UserChallenge
+    from app.models.user_subscription import UserSubscription
     from app.models.weekly_summary import WeeklySummary
     from app.models.xp_profile import XpProfile
 
@@ -27,6 +29,9 @@ class User(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false"), default=False
+    )
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         back_populates="user",
@@ -59,6 +64,15 @@ class User(Base, TimestampMixin):
         cascade="all, delete-orphan",
     )
     challenges: Mapped[list["UserChallenge"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    subscription: Mapped["UserSubscription | None"] = relationship(
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    usage_events: Mapped[list["UsageEvent"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    admin,
     analytics,
     auth,
     export,
@@ -24,6 +25,7 @@ api_router.include_router(health.router)
 v1_router = APIRouter(prefix=settings.api_v1_prefix)
 v1_router.include_router(auth.router)
 v1_router.include_router(users.router)
+v1_router.include_router(admin.router)
 v1_router.include_router(journals.router)
 v1_router.include_router(summary.router)
 v1_router.include_router(analytics.router)

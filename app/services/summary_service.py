@@ -51,6 +51,10 @@ def generate_weekly_summary(
     if not entries:
         raise BadRequestError("No journal entries in this week to summarize")
 
+    from app.services import billing_service
+
+    billing_service.require_quota(db, user_id, billing_service.ACTION_WEEKLY_SUMMARY)
+
     result = ai_service.generate_weekly_summary([entry.content for entry in entries])
 
     record = db.scalar(
@@ -68,6 +72,9 @@ def generate_weekly_summary(
     record.suggestions = result["suggestions"]
     record.entry_count = len(entries)
 
+    billing_service.record_usage(
+        db, user_id, billing_service.ACTION_WEEKLY_SUMMARY, commit=False
+    )
     db.commit()
     db.refresh(record)
     from app.services import gamification_hooks

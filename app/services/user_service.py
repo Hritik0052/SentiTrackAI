@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.billing import PlanSummary
+from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.services import billing_service
 
 
 def get_user(db: Session, user_id: int) -> User:
@@ -29,8 +31,11 @@ def create_user(db: Session, payload: UserCreate) -> User:
         name=payload.name,
         email=str(payload.email),
         password_hash=hash_password(payload.password),
+        is_admin=False,
     )
     db.add(user)
+    db.flush()
+    billing_service.assign_default_plan(db, user, commit=False)
     db.commit()
     db.refresh(user)
     return user
@@ -58,3 +63,16 @@ def update_user(db: Session, user: User, payload: UserUpdate) -> User:
 def delete_user(db: Session, user: User) -> None:
     db.delete(user)
     db.commit()
+
+
+def to_user_read(db: Session, user: User) -> UserRead:
+    plan = billing_service.get_user_plan(db, user.id)
+    return UserRead(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        is_admin=bool(user.is_admin),
+        plan=PlanSummary.model_validate(plan) if plan else None,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+    )
