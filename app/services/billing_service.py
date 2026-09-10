@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
@@ -35,7 +35,15 @@ _ACTION_LABELS = {
 
 
 def _now() -> datetime:
-    return datetime.utcnow()
+    """UTC-aware now — matches DateTime(timezone=True) columns on Postgres."""
+    return datetime.now(timezone.utc)
+
+
+def _as_utc(value: datetime) -> datetime:
+    """Normalize naive/aware datetimes so comparisons never mix types."""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def plan_duration_days(plan: SubscriptionPlan) -> int:
@@ -51,13 +59,13 @@ def plan_duration_days(plan: SubscriptionPlan) -> int:
 
 
 def compute_ends_at(starts_at: datetime, plan: SubscriptionPlan) -> datetime:
-    return starts_at + timedelta(days=plan_duration_days(plan))
+    return _as_utc(starts_at) + timedelta(days=plan_duration_days(plan))
 
 
 def is_subscription_expired(sub: UserSubscription, *, now: datetime | None = None) -> bool:
     if sub.ends_at is None:
         return False
-    return sub.ends_at <= (now or _now())
+    return _as_utc(sub.ends_at) <= _as_utc(now or _now())
 
 
 def apply_subscription_window(
@@ -78,10 +86,10 @@ def apply_subscription_window(
         and sub.plan_id == plan.id
         and sub.status == "active"
         and sub.ends_at is not None
-        and sub.ends_at > now
+        and _as_utc(sub.ends_at) > now
     ):
         sub.starts_at = sub.starts_at or now
-        sub.ends_at = sub.ends_at + timedelta(days=days)
+        sub.ends_at = _as_utc(sub.ends_at) + timedelta(days=days)
         return
     sub.starts_at = now
     sub.ends_at = now + timedelta(days=days)
