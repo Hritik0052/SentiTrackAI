@@ -9,7 +9,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.billing import UsageSnapshot
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.user import ChangePasswordRequest, UserCreate, UserRead, UserUpdate
 from app.services import billing_service, user_service
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -50,6 +50,19 @@ def update_me(
 ) -> UserRead:
     user = user_service.update_user(db, current_user, payload)
     return user_service.to_user_read(db, user)
+
+
+@router.post(
+    "/me/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Change password (requires current password)",
+)
+def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    user_service.change_password(db, current_user, payload)
 
 
 @router.delete(

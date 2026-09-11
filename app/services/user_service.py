@@ -5,10 +5,10 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import ConflictError, NotFoundError
-from app.core.security import hash_password
+from app.core.exceptions import BadRequestError, ConflictError, NotFoundError
+from app.core.security import hash_password, verify_password
 from app.models.user import User
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.user import ChangePasswordRequest, UserCreate, UserRead, UserUpdate
 from app.services import billing_service
 
 
@@ -51,12 +51,19 @@ def update_user(db: Session, user: User, payload: UserUpdate) -> User:
 
     if data.get("name"):
         user.name = data["name"]
-    if data.get("password"):
-        user.password_hash = hash_password(data["password"])
 
     db.commit()
     db.refresh(user)
     return user
+
+
+def change_password(db: Session, user: User, payload: ChangePasswordRequest) -> None:
+    if not verify_password(payload.current_password, user.password_hash):
+        raise BadRequestError("Current password is incorrect")
+    if payload.current_password == payload.new_password:
+        raise BadRequestError("New password must be different from the current password")
+    user.password_hash = hash_password(payload.new_password)
+    db.commit()
 
 
 def delete_user(db: Session, user: User) -> None:
